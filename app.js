@@ -68,6 +68,7 @@ const routeTitle    = document.getElementById('routeTitle');
 const routeDistance = document.getElementById('routeDistance');
 const routeDuration = document.getElementById('routeDuration');
 const routeNote     = document.getElementById('routeNote');
+const waveform      = document.getElementById('waveform');
 
 // ── Populate Dropdown ───────────────────────────────────────
 function populateSelector() {
@@ -179,9 +180,9 @@ function stopRadio() {
 
 function setPlayState(playing) {
   isPlaying = playing;
-  // Set icon attribute first, then render
   playIcon.setAttribute('data-lucide', playing ? 'square' : 'play');
   lucide.createIcons();
+  waveform.classList.toggle('active', playing);
 }
 
 radioPlayBtn.addEventListener('click', () => {
