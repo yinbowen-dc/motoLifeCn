@@ -185,8 +185,10 @@ html, body {
   position: fixed;
   bottom: 90px;
   right: 20px;
-  width: 300px;
-  height: 240px;
+  width: min(400px, 40vw);
+  height: min(320px, 40vh);
+  min-width: 280px;
+  min-height: 200px;
   z-index: 50;
   border-radius: 16px;
   overflow: hidden;
@@ -256,6 +258,63 @@ html, body {
 }
 .leaflet-popup-tip { background: var(--surface) !important; }
 .leaflet-popup-close-button { color: var(--text-muted) !important; }
+
+/* Leaflet control styles */
+.leaflet-control-zoom a {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--surface2) !important;
+  color: var(--accent) !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.7) !important;
+  color: var(--text-muted) !important;
+  font-size: 11px !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--accent) !important;
+}
+
+/* Additional Leaflet control styles */
+.leaflet-bar {
+  box-shadow: var(--shadow-sm) !important;
+  border-radius: var(--radius-btn) !important;
+}
+
+.leaflet-control-layers {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-btn) !important;
+}
+
+.leaflet-control-layers-toggle {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.leaflet-control-scale-line {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Generic Leaflet control background override */
+.leaflet-control {
+  background: transparent !important;
+}
+
+.leaflet-control-container .leaflet-control {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
 
 /* ── Waveform Visualizer ──────────────────────────────────── */
 .waveform {
@@ -455,8 +514,10 @@ html, body {
   }
 
   #map-container {
-    width: 200px;
-    height: 160px;
+    width: min(280px, 35vw);
+    height: min(220px, 35vh);
+    min-width: 200px;
+    min-height: 180px;
     bottom: 110px;
     right: 12px;
   }
@@ -496,7 +557,8 @@ html, body {
 
   #map-container {
     width: calc(100% - 24px);
-    height: 140px;
+    height: min(200px, 30vh);
+    min-height: 150px;
     bottom: 110px;
     right: 12px;
     left: 12px;

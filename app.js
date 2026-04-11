@@ -4,50 +4,6 @@
 
 'use strict';
 
-// ── City Data ───────────────────────────────────────────────
-const CITIES = [
-  {
-    name: '广州',
-    nameEn: 'Guangzhou',
-    country: '中国',
-    region: '广东省',
-    lat: 23.1291,
-    lng: 113.2644,
-    videoFile: 'video/guangzhou.mp4',
-    route: {
-      title: '珠江沿岸骑行',
-      distance: '68 km',
-      duration: '2.5 小时',
-      note: '最佳时段傍晚，沿江风景绝佳'
-    },
-    radio: {
-      name: 'Radio Guangzhou 105.1',
-      url: 'https://lhttp.qtfm.cn/l/1/index.m3u8'
-    }
-  }
-
-  // 未来城市示例（取消注释并填入真实数据）：
-  // {
-  //   name: '成都',
-  //   nameEn: 'Chengdu',
-  //   country: '中国',
-  //   region: '四川省',
-  //   lat: 30.5728,
-  //   lng: 104.0668,
-  //   videoFile: 'video/chengdu.mp4',
-  //   route: {
-  //     title: '锦江骑行',
-  //     distance: '45 km',
-  //     duration: '2 小时',
-  //     note: '途经宽窄巷子，感受天府之国风情'
-  //   },
-  //   radio: {
-  //     name: 'Radio Chengdu 88.5',
-  //     url: ''
-  //   }
-  // },
-];
-
 // ── State ───────────────────────────────────────────────────
 let map = null;
 let marker = null;
@@ -70,16 +26,6 @@ const routeDuration = document.getElementById('routeDuration');
 const routeNote     = document.getElementById('routeNote');
 const waveform      = document.getElementById('waveform');
 
-// ── Populate Dropdown ───────────────────────────────────────
-function populateSelector() {
-  CITIES.forEach((city, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `${city.name}・${city.region}`;
-    citySelector.appendChild(opt);
-  });
-}
-
 // ── Init Leaflet Map ────────────────────────────────────────
 function initMap() {
   map = L.map('map', {
@@ -89,11 +35,63 @@ function initMap() {
     attributionControl: true
   });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://carto.com/" target="_blank">CARTO</a>',
     subdomains: 'abcd',
     maxZoom: 19
   }).addTo(map);
+
+  // Add error handling for tile loading
+  map.on('tileerror', function(e) {
+    console.warn('Tile loading error:', e);
+    // Try alternative tile server if primary fails
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+  });
+
+  // Render map with first city immediately
+  renderMapWithCity();
+}
+
+function renderMapWithCity() {
+  console.log('Rendering map with city data...');
+  const first = CITIES[0];
+  
+  // Ensure map container is properly sized
+  try {
+    // Force map to recalculate size
+    setTimeout(() => {
+      if (map) {
+        map.invalidateSize();
+        
+        // Set initial view
+        map.setView([first.lat, first.lng], 9);
+        marker = L.marker([first.lat, first.lng], { icon: createPulseIcon() })
+          .addTo(map)
+          .bindPopup(`<strong>${first.name}</strong><br>${first.region}，${first.country}`)
+          .openPopup();
+
+        cityLabel.textContent = `${first.name}，${first.country}`;
+        cityLabel.classList.add('visible');
+        
+        console.log('Map rendered successfully');
+      }
+    }, 100);
+  } catch (error) {
+    console.error('Error rendering map:', error);
+  }
+}
+
+// ── Populate Dropdown ───────────────────────────────────────
+function populateSelector() {
+  CITIES.forEach((city, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${city.name}・${city.region}`;
+    citySelector.appendChild(opt);
+  });
 }
 
 // ── Custom Marker Icon ──────────────────────────────────────
@@ -118,7 +116,7 @@ function loadCity(cityIndex) {
 
   // 2. Fly map to city
   if (map) {
-    map.flyTo([city.lat, city.lng], 12, { duration: 1.5 });
+    map.flyTo([city.lat, city.lng], 9, { duration: 1.5 });
 
     if (marker) {
       map.removeLayer(marker);
@@ -224,38 +222,31 @@ citySelector.addEventListener('change', (e) => {
 function init() {
   populateSelector();
   initMap();
-
+  
   // Render Lucide icons
   lucide.createIcons();
 
-  // Load first city
+  // Load first city UI elements
   const first = CITIES[0];
-
-  // Set map view to first city (no fly animation on load)
-  map.setView([first.lat, first.lng], 11);
-  marker = L.marker([first.lat, first.lng], { icon: createPulseIcon() })
-    .addTo(map)
-    .bindPopup(`<strong>${first.name}</strong><br>${first.region}，${first.country}`)
-    .openPopup();
-
-  cityLabel.textContent = `${first.name}，${first.country}`;
-  cityLabel.classList.add('visible');
 
   // Load video
   cityVideo.src = first.videoFile;
   cityVideo.load();
-  cityVideo.play().catch(() => {});
+  cityVideo.play().catch(() => {
+    // Autoplay may be blocked; video will play on user interaction
+  });
 
-  // Route info card
+  // Load audio
+  radioAudio.src = first.radio.url;
+  radioAudio.load();
+
+  // Update UI elements
   routeCity.textContent = `${first.name} · ${first.region}`;
   routeTitle.textContent = first.route.title;
   routeDistance.textContent = `🛣 ${first.route.distance}`;
   routeDuration.textContent = `⏱ ${first.route.duration}`;
   routeNote.textContent = first.route.note;
-
-  // Radio
   stationName.textContent = first.radio.name;
-  radioAudio.src = first.radio.url;
 }
 
 // Run after DOM is ready
