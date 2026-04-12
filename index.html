@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" id="html-root">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -48,6 +48,12 @@
       <button id="randomBtn" class="btn-random" title="随机地点 (R)">
         <i data-lucide="shuffle"></i>
       </button>
+      <label for="gpxUpload" class="btn-gpx" title="上传GPX轨迹文件">
+        <i data-lucide="route"></i>
+        <input type="file" id="gpxUpload" accept=".gpx" style="display: none;">
+      </label>
+      <!-- Language Toggle -->
+      <button id="langToggleBtn" class="btn-lang" title="Switch Language">EN</button>
     </div>
   </header>
 
@@ -60,6 +66,24 @@
       <span id="routeDuration"></span>
     </div>
     <div class="route-note" id="routeNote"></div>
+    
+    <!-- 实时轨迹信息显示 -->
+    <div id="trackInfo" class="track-info" style="display: none;">
+      <div class="track-time">
+        <span class="metric-label" data-i18n="trackTime">时间</span>
+        <span id="currentTime">--</span>
+      </div>
+      <div class="track-metrics">
+        <div class="metric">
+          <span class="metric-label" data-i18n="trackAccuracy">精度</span>
+          <span id="metricC">--</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label" data-i18n="trackSpeed">速度</span>
+          <span id="metricS">-- m/s</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ── Map Container (bottom-right) ──────────────────────── -->
@@ -86,6 +110,9 @@
       </div>
 
       <div class="radio-controls">
+        <button id="radioShuffleBtn" class="btn-control" data-i18n-title="radioShuffleTitle" title="随机切换电台">
+          <i data-lucide="shuffle"></i>
+        </button>
         <button id="radioPlayBtn" class="btn-control" title="Play / Stop">
           <i data-lucide="play" id="playIcon"></i>
         </button>
@@ -105,9 +132,6 @@
   <!-- ── Scripts ─────────────────────────────────────────────── -->
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- City Data -->
-  <script type="module" src="const.js"></script>
 
   <!-- App Logic -->
   <script type="module" src="app.js"></script>

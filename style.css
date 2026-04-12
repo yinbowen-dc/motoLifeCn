@@ -201,6 +201,59 @@ html, body {
   transform: none;
 }
 
+/* ── GPX Upload Button ────────────────────────────────────── */
+.btn-gpx {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border);
+  background: var(--accent-dim);
+  color: var(--accent);
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition), border-color var(--transition);
+  flex-shrink: 0;
+}
+
+.btn-gpx:hover {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  transform: scale(1.05);
+}
+
+.btn-gpx svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Language Toggle Button ───────────────────────────────── */
+.btn-lang {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border);
+  background: var(--accent-dim);
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  transition: background var(--transition), border-color var(--transition);
+  flex-shrink: 0;
+}
+
+.btn-lang:hover {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
 /* ── Route Info Card (bottom-left) ────────────────────────── */
 .route-card {
   position: fixed;
@@ -249,10 +302,10 @@ html, body {
   position: fixed;
   bottom: 90px;
   right: 20px;
-  width: min(400px, 40vw);
-  height: min(320px, 40vh);
-  min-width: 280px;
-  min-height: 200px;
+  width: min(350px, 35vw);
+  height: min(280px, 35vh);
+  min-width: 250px;
+  min-height: 180px;
   z-index: 50;
   border-radius: 16px;
   overflow: hidden;
@@ -578,10 +631,10 @@ html, body {
   }
 
   #map-container {
-    width: min(280px, 35vw);
-    height: min(220px, 35vh);
-    min-width: 200px;
-    min-height: 180px;
+    width: min(250px, 30vw);
+    height: min(200px, 30vh);
+    min-width: 180px;
+    min-height: 160px;
     bottom: 110px;
     right: 12px;
   }
@@ -621,10 +674,62 @@ html, body {
 
   #map-container {
     width: calc(100% - 24px);
-    height: min(200px, 30vh);
-    min-height: 150px;
+    height: min(180px, 25vh);
+    min-height: 130px;
     bottom: 110px;
     right: 12px;
     left: 12px;
   }
+}
+
+/* ── 实时轨迹信息显示 ────────────────────────────────────── */
+.track-info {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.track-time {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.track-time .metric-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.track-time #currentTime {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.track-metrics {
+  display: flex;
+  gap: 16px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.metric-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric span:last-child {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
 }
