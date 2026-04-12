@@ -21,8 +21,14 @@
 </head>
 <body>
 
-  <!-- ── Fullscreen Background Video ──────────────────────── -->
-  <video id="cityVideo" autoplay muted loop playsinline></video>
+  <!-- ── Fullscreen Background (YouTube iframe) ──────────── -->
+  <div id="video-bg">
+    <iframe id="cityIframe" frameborder="0"
+      allow="autoplay; encrypted-media; fullscreen" 
+      allowfullscreen
+      loading="eager"
+      referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
 
   <!-- ── Header ─────────────────────────────────────────────── -->
   <header class="header">
@@ -31,12 +37,17 @@
       <span class="header-title">Moto Life China</span>
     </div>
 
-    <div class="city-select-wrap">
-      <i data-lucide="map-pin" class="select-icon"></i>
-      <select id="citySelector" class="city-selector">
-        <!-- Populated by JS -->
-      </select>
-      <i data-lucide="chevron-down" class="select-chevron"></i>
+    <div class="header-right">
+      <div class="city-select-wrap">
+        <i data-lucide="map-pin" class="select-icon"></i>
+        <select id="citySelector" class="city-selector">
+          <!-- Populated by JS -->
+        </select>
+        <i data-lucide="chevron-down" class="select-chevron"></i>
+      </div>
+      <button id="randomBtn" class="btn-random" title="随机地点 (R)">
+        <i data-lucide="shuffle"></i>
+      </button>
     </div>
   </header>
 

@@ -4,13 +4,14 @@
 
 'use strict';
 
-// ── State ───────────────────────────────────────────────────
+// ── State ──────────────────────────────────────────────────
 let map = null;
 let marker = null;
 let isPlaying = false;
-let currentCityIndex = 0;
+let currentCityIndex = 0;   // 当前选中城市
+let currentSpotIndex = 0;   // 当前展示的地点索引
 
-// ── DOM Refs ────────────────────────────────────────────────
+// ── DOM Refs ───────────────────────────────────────────────
 const citySelector  = document.getElementById('citySelector');
 const stationName   = document.getElementById('stationName');
 const radioPlayBtn  = document.getElementById('radioPlayBtn');
@@ -18,7 +19,8 @@ const playIcon      = document.getElementById('playIcon');
 const volumeSlider  = document.getElementById('volumeSlider');
 const radioAudio    = document.getElementById('radioAudio');
 const cityLabel     = document.getElementById('city-label');
-const cityVideo     = document.getElementById('cityVideo');
+const cityIframe    = document.getElementById('cityIframe');
+const randomBtn     = document.getElementById('randomBtn');
 const routeCity     = document.getElementById('routeCity');
 const routeTitle    = document.getElementById('routeTitle');
 const routeDistance = document.getElementById('routeDistance');
@@ -26,7 +28,7 @@ const routeDuration = document.getElementById('routeDuration');
 const routeNote     = document.getElementById('routeNote');
 const waveform      = document.getElementById('waveform');
 
-// ── Init Leaflet Map ────────────────────────────────────────
+// ── Init Leaflet Map ───────────────────────────────────────
 function initMap() {
   map = L.map('map', {
     center: [20, 0],
@@ -35,56 +37,34 @@ function initMap() {
     attributionControl: true
   });
 
-  const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://carto.com/" target="_blank">CARTO</a>',
     subdomains: 'abcd',
     maxZoom: 19
   }).addTo(map);
 
-  // Add error handling for tile loading
   map.on('tileerror', function(e) {
     console.warn('Tile loading error:', e);
-    // Try alternative tile server if primary fails
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19
     }).addTo(map);
   });
 
-  // Render map with first city immediately
-  renderMapWithCity();
+  setTimeout(() => {
+    if (map) {
+      map.invalidateSize();
+      const first = CITIES[0];
+      const firstSpot = first.spots[0];
+      map.setView([firstSpot.lat, firstSpot.lng], 13);
+      updateMarker(firstSpot.lat, firstSpot.lng, firstSpot.title);
+      cityLabel.textContent = `${first.name}，${first.country}`;
+      cityLabel.classList.add('visible');
+    }
+  }, 100);
 }
 
-function renderMapWithCity() {
-  console.log('Rendering map with city data...');
-  const first = CITIES[0];
-  
-  // Ensure map container is properly sized
-  try {
-    // Force map to recalculate size
-    setTimeout(() => {
-      if (map) {
-        map.invalidateSize();
-        
-        // Set initial view
-        map.setView([first.lat, first.lng], 9);
-        marker = L.marker([first.lat, first.lng], { icon: createPulseIcon() })
-          .addTo(map)
-          .bindPopup(`<strong>${first.name}</strong><br>${first.region}，${first.country}`)
-          .openPopup();
-
-        cityLabel.textContent = `${first.name}，${first.country}`;
-        cityLabel.classList.add('visible');
-        
-        console.log('Map rendered successfully');
-      }
-    }, 100);
-  } catch (error) {
-    console.error('Error rendering map:', error);
-  }
-}
-
-// ── Populate Dropdown ───────────────────────────────────────
+// ── Populate Dropdown ──────────────────────────────────────
 function populateSelector() {
   CITIES.forEach((city, i) => {
     const opt = document.createElement('option');
@@ -94,7 +74,7 @@ function populateSelector() {
   });
 }
 
-// ── Custom Marker Icon ──────────────────────────────────────
+// ── Custom Marker Icon ─────────────────────────────────────
 function createPulseIcon() {
   return L.divIcon({
     className: '',
@@ -105,61 +85,46 @@ function createPulseIcon() {
   });
 }
 
-// ── Load City ───────────────────────────────────────────────
-function loadCity(cityIndex) {
-  const city = CITIES[cityIndex];
-  currentCityIndex = cityIndex;
-
-  // 1. Update city label on map
-  cityLabel.textContent = `${city.name}，${city.country}`;
-  cityLabel.classList.add('visible');
-
-  // 2. Fly map to city
-  if (map) {
-    map.flyTo([city.lat, city.lng], 9, { duration: 1.5 });
-
-    if (marker) {
-      map.removeLayer(marker);
-      marker = null;
-    }
-
-    // Drop marker after fly animation starts
-    setTimeout(() => {
-      marker = L.marker([city.lat, city.lng], { icon: createPulseIcon() })
-        .addTo(map)
-        .bindPopup(`<strong>${city.name}</strong><br>${city.region}，${city.country}`)
-        .openPopup();
-    }, 600);
+// ── Update Marker ──────────────────────────────────────────
+function updateMarker(lat, lng, title) {
+  if (marker) {
+    map.removeLayer(marker);
+    marker = null;
   }
+  marker = L.marker([lat, lng], { icon: createPulseIcon() })
+    .addTo(map)
+    .bindPopup(`<strong>${title}</strong>`)
+    .openPopup();
+}
 
-  // 3. Load local video
-  cityVideo.src = city.videoFile;
-  cityVideo.load();
-  cityVideo.play().catch(() => {
-    // Autoplay may be blocked; video will play on user interaction
-  });
+// ── Video (iframe) ─────────────────────────────────────────
+function updateVideo(url) {
+  // 淡出
+  cityIframe.classList.remove('loaded');
+  setTimeout(() => {
+    cityIframe.src = url;
+    // 淡入：等 iframe onload 触发
+    const onLoad = () => {
+      cityIframe.classList.add('loaded');
+      cityIframe.removeEventListener('load', onLoad);
+    };
+    cityIframe.addEventListener('load', onLoad);
+    // 兜底：1.5s 后强制显示（避免跨域 load 事件不触发）
+    setTimeout(() => cityIframe.classList.add('loaded'), 1500);
+  }, 300);
+}
 
-  // 4. Update route info card
-  routeCity.textContent = `${city.name} · ${city.region}`;
-  routeTitle.textContent = city.route.title;
-  routeDistance.textContent = `🛣 ${city.route.distance}`;
-  routeDuration.textContent = `⏱ ${city.route.duration}`;
-  routeNote.textContent = city.route.note;
-
-  // 5. Update radio
+// ── Radio Controls ─────────────────────────────────────────
+function updateRadio(radio) {
   const wasPlaying = isPlaying;
   stopRadio();
-
-  stationName.textContent = city.radio.name;
-  radioAudio.src = city.radio.url;
-
+  stationName.textContent = radio.name;
+  radioAudio.src = radio.url;
   if (wasPlaying) {
-    // Small delay to let src settle
     setTimeout(() => playRadio(), 300);
   }
 }
 
-// ── Radio Controls ──────────────────────────────────────────
 function playRadio() {
   if (!radioAudio.src) return;
   radioAudio.volume = parseFloat(volumeSlider.value);
@@ -183,11 +148,98 @@ function setPlayState(playing) {
   waveform.classList.toggle('active', playing);
 }
 
+// ── Load Spot (地点级：视频 + 地图 + 信息卡) ───────────────
+function loadSpot(spotIdx) {
+  currentSpotIndex = spotIdx;
+  const city = CITIES[currentCityIndex];
+  const spot = city.spots[spotIdx];
+
+  // 1. 更新视频（淡出 → 换 src → 淡入）
+  updateVideo(spot.videoUrl);
+
+  // 2. 地图飞到地点坐标
+  if (map) {
+    map.flyTo([spot.lat, spot.lng], 13, { duration: 1.2 });
+    setTimeout(() => updateMarker(spot.lat, spot.lng, spot.title), 600);
+  }
+
+  // 3. 更新信息卡
+  routeCity.textContent     = `${city.name} · ${city.region}`;
+  routeTitle.textContent    = spot.title;
+  routeDistance.textContent = `🛣 ${spot.distance}`;
+  routeDuration.textContent = `⏱ ${spot.duration}`;
+  routeNote.textContent     = spot.note;
+}
+
+// ── Load City (城市级：切换城市) ────────────────────────────
+function loadCity(cityIdx) {
+  currentCityIndex = cityIdx;
+  const city = CITIES[cityIdx];
+
+  // 更新城市标签
+  cityLabel.textContent = `${city.name}，${city.country}`;
+  cityLabel.classList.add('visible');
+
+  // 地图先飞到城市中心
+  if (map) {
+    map.flyTo([city.lat, city.lng], 10, { duration: 1.5 });
+  }
+
+  // 更新电台
+  updateRadio(city.radio);
+
+  // 随机选一个地点并加载
+  const spotIdx = Math.floor(Math.random() * city.spots.length);
+  loadSpot(spotIdx);
+
+  // 更新随机按钮禁用状态
+  updateRandomBtnState(city);
+}
+
+// ── Random Spot (城市内随机换地点) ─────────────────────────
+function randomSpot() {
+  const city = CITIES[currentCityIndex];
+  if (city.spots.length <= 1) return;
+  let idx;
+  do {
+    idx = Math.floor(Math.random() * city.spots.length);
+  } while (idx === currentSpotIndex);
+  loadSpot(idx);
+}
+
+// ── Random Button State ────────────────────────────────────
+function updateRandomBtnState(city) {
+  if (city.spots.length <= 1) {
+    randomBtn.disabled = true;
+    randomBtn.title = '该城市只有一个地点';
+  } else {
+    randomBtn.disabled = false;
+    randomBtn.title = '随机地点 (R)';
+  }
+}
+
+// ── Event Listeners ────────────────────────────────────────
+citySelector.addEventListener('change', (e) => {
+  loadCity(parseInt(e.target.value, 10));
+});
+
+randomBtn.addEventListener('click', () => {
+  randomSpot();
+});
+
+document.addEventListener('keydown', (e) => {
+  // 避免在输入框聚焦时触发
+  const tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  if (e.key === 'r' || e.key === 'R') {
+    randomSpot();
+  }
+});
+
 radioPlayBtn.addEventListener('click', () => {
   if (isPlaying) {
     stopRadio();
   } else {
-    // Ensure src is set for current city
     const city = CITIES[currentCityIndex];
     if (!radioAudio.src || radioAudio.src !== city.radio.url) {
       radioAudio.src = city.radio.url;
@@ -200,56 +252,38 @@ volumeSlider.addEventListener('input', () => {
   radioAudio.volume = parseFloat(volumeSlider.value);
 });
 
-radioAudio.addEventListener('error', (e) => {
-  console.warn('Radio stream error:', e);
-  setPlayState(false);
-});
+radioAudio.addEventListener('error',   (e) => { console.warn('Radio stream error:', e); setPlayState(false); });
+radioAudio.addEventListener('playing', ()  => setPlayState(true));
+radioAudio.addEventListener('pause',   ()  => setPlayState(false));
 
-radioAudio.addEventListener('playing', () => {
-  setPlayState(true);
-});
-
-radioAudio.addEventListener('pause', () => {
-  setPlayState(false);
-});
-
-// ── City Selector Change ────────────────────────────────────
-citySelector.addEventListener('change', (e) => {
-  loadCity(parseInt(e.target.value, 10));
-});
-
-// ── Init ────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────
 function init() {
   populateSelector();
   initMap();
-  
-  // Render Lucide icons
   lucide.createIcons();
 
-  // Load first city UI elements
-  const first = CITIES[0];
+  const first     = CITIES[0];
+  const firstSpot = first.spots[0];
 
-  // Load video
-  cityVideo.src = first.videoFile;
-  cityVideo.load();
-  cityVideo.play().catch(() => {
-    // Autoplay may be blocked; video will play on user interaction
-  });
+  // 加载第一个城市的第一个地点视频
+  updateVideo(firstSpot.videoUrl);
 
-  // Load audio
+  // 信息卡
+  routeCity.textContent     = `${first.name} · ${first.region}`;
+  routeTitle.textContent    = firstSpot.title;
+  routeDistance.textContent = `🛣 ${firstSpot.distance}`;
+  routeDuration.textContent = `⏱ ${firstSpot.duration}`;
+  routeNote.textContent     = firstSpot.note;
+
+  // 电台
+  stationName.textContent = first.radio.name;
   radioAudio.src = first.radio.url;
   radioAudio.load();
 
-  // Update UI elements
-  routeCity.textContent = `${first.name} · ${first.region}`;
-  routeTitle.textContent = first.route.title;
-  routeDistance.textContent = `🛣 ${first.route.distance}`;
-  routeDuration.textContent = `⏱ ${first.route.duration}`;
-  routeNote.textContent = first.route.note;
-  stationName.textContent = first.radio.name;
+  // 随机按钮初始状态
+  updateRandomBtnState(first);
 }
 
-// Run after DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
