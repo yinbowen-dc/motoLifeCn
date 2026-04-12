@@ -347,8 +347,9 @@ async function parseGpxFile(gpxContent) {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(gpxContent, 'text/xml');
     
-    // 检查解析错误
-    const parseError = xmlDoc.getElementsByTagName('parsererror')[0];
+    // 检查解析错误（兼容命名空间，parsererror 可能在任意命名空间下）
+    const parseError = xmlDoc.querySelector('parsererror') ||
+                       xmlDoc.getElementsByTagNameNS('http://www.mozilla.org/newlayout/xml/parsererror.xml', 'parsererror')[0];
     if (parseError) {
       throw new Error(t('gpxParseError'));
     }
@@ -357,7 +358,13 @@ async function parseGpxFile(gpxContent) {
     gpxTrackPoints = [];
     gpxTimestamps = [];
     gpxExtensions = [];
-    const trkptElements = xmlDoc.getElementsByTagName('trkpt');
+    // 使用 getElementsByTagNameNS 兼容带命名空间的 GPX 文件
+    const GPX_NS = 'http://www.topografix.com/GPX/1/1';
+    let trkptElements = xmlDoc.getElementsByTagNameNS(GPX_NS, 'trkpt');
+    // fallback：如果命名空间查找失败，退回到无命名空间查找
+    if (trkptElements.length === 0) {
+      trkptElements = xmlDoc.getElementsByTagName('trkpt');
+    }
     
     for (let i = 0; i < trkptElements.length; i++) {
       const trkpt = trkptElements[i];
@@ -365,14 +372,17 @@ async function parseGpxFile(gpxContent) {
       const lon = parseFloat(trkpt.getAttribute('lon'));
       
       // 提取时间信息
-      const timeElement = trkpt.getElementsByTagName('time')[0];
+      let timeElement = trkpt.getElementsByTagNameNS(GPX_NS, 'time')[0];
+      if (!timeElement) timeElement = trkpt.getElementsByTagName('time')[0];
       let timestamp = null;
       if (timeElement) {
         timestamp = new Date(timeElement.textContent);
       }
       
       // 提取扩展数据（c和s指标）
-      const extensionElement = trkpt.getElementsByTagName('geotracker:meta')[0];
+      const GEOTRACKER_NS = 'http://ilyabogdanovich.com/gpx/extensions/geotracker';
+      let extensionElement = trkpt.getElementsByTagNameNS(GEOTRACKER_NS, 'meta')[0];
+      if (!extensionElement) extensionElement = trkpt.getElementsByTagName('geotracker:meta')[0];
       let extensionData = null;
       if (extensionElement) {
         const c = parseFloat(extensionElement.getAttribute('c'));
