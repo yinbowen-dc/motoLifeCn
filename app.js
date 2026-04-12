@@ -4,6 +4,8 @@
 
 'use strict';
 
+import { CITIES } from './const.js';
+
 // ── State ──────────────────────────────────────────────────
 let map = null;
 let marker = null;

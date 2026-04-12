@@ -1,5 +1,5 @@
 // ── City Data ───────────────────────────────────────────────
-const CITIES = [
+export const CITIES = [
   {
     name: '广州',
     nameEn: 'Guangzhou',
