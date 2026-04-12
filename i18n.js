@@ -1,5 +1,5 @@
 // ── i18n — Internationalization ───────────────────────────
-export let currentLang = localStorage.getItem('lang') || 'zh';
+export let currentLang = localStorage.getItem('lang') || 'en';
 
 export const TRANSLATIONS = {
   zh: {
