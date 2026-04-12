@@ -347,8 +347,8 @@ async function parseGpxFile(gpxContent) {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(gpxContent, 'text/xml');
     
-    // 检查解析错误（兼容命名空间，parsererror 可能在任意命名空间下）
-    const parseError = xmlDoc.querySelector('parsererror') ||
+    // 检查解析错误（用 getElementsByTagName 兼容所有浏览器）
+    const parseError = xmlDoc.getElementsByTagName('parsererror')[0] ||
                        xmlDoc.getElementsByTagNameNS('http://www.mozilla.org/newlayout/xml/parsererror.xml', 'parsererror')[0];
     if (parseError) {
       throw new Error(t('gpxParseError'));
